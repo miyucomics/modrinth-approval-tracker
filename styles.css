@@ -1,0 +1,139 @@
+:root {
+	--background-color: #1e1e2e;
+	--panel-color: #181825;
+	--text-color: #cdd6f4;
+	--subtext-color: #a6adc8;
+	--data-color: #cba6f7;
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: var(--background-color);
+	color: var(--text-color);
+	margin: 0;
+	padding: 0;
+	transition: all 0.3s;
+}
+
+#theme-toggle {
+	position: fixed;
+	top: 10px;
+	left: 10px;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	border: none;
+	background-color: var(--panel-color);
+	color: var(--text-color);
+	font-size: 14px;
+	cursor: pointer;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.container {
+	max-width: 100%;
+	margin: 0 auto;
+	padding: 2rem;
+}
+
+.main-heading {
+	font-size: 2.5rem;
+	font-weight: 800;
+	text-align: center;
+	margin-bottom: 0.5rem;
+}
+
+.description {
+	text-align: center;
+	color: var(--subtext-color);
+	font-size: 1.2rem;
+	margin-bottom: 1.5rem;
+}
+
+.status {
+	text-align: center;
+	font-size: 1.75rem;
+	font-weight: 700;
+	margin-bottom: 2rem;
+	color: var(--data-color);
+}
+
+.mod-container {
+	padding: 1.5rem;
+	background-color: var(--panel-color);
+	border-radius: 1rem;
+}
+
+.section-heading {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+	text-align: center;
+}
+
+.mod-list {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 640px) {
+	.mod-list {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (min-width: 1024px) {
+	.mod-list {
+		grid-template-columns: repeat(5, 1fr);
+	}
+}
+
+.card {
+	background-color: var(--background-color);
+	padding: 1rem;
+	border-radius: 0.75rem;
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	gap: 1rem;
+	transition: transform 0.1s;
+}
+
+.card:hover {
+	transform: scale(1.05);
+}
+
+.card-icon {
+	width: 4rem;
+	height: 4rem;
+	border-radius: 0.75rem;
+	image-rendering: pixelated;
+	object-fit: cover;
+	flex-shrink: 0;
+}
+
+.card-text {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 1;
+	min-width: 0;
+}
+
+.card-title {
+	font-weight: 700;
+	font-size: 1.125rem;
+	color: var(--text-color);
+	text-decoration: none;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.card-time {
+	font-size: 0.875rem;
+	color: var(--subtext-color);
+}
