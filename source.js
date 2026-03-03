@@ -3,6 +3,7 @@ let sample = parseInt(urlParams.get("sample"));
 if (isNaN(sample) || sample < 1 || sample > 500)
     sample = 50;
 const SAMPLE_SIZE = sample;
+const REQUEST_SIZE = Math.max(SAMPLE_SIZE, 100);
 
 const lightTheme = {
     "--background-color": "#eff1f5",
@@ -39,7 +40,7 @@ async function api(url) {
 
 async function main() {
 	const statusText = document.getElementById("status");
-	
+
 	try {
 		statusText.textContent = `Analyzing the ${SAMPLE_SIZE} newest mods...`;
 
@@ -54,27 +55,48 @@ async function main() {
 }
 
 async function downloadProjects() {
-	const search = await api(`search?index=newest&limit=${SAMPLE_SIZE}&facets=%5B%5B%22project_type%3Amod%22%5D%5D`);
-	
-	const ids = search.hits.map(p => p.project_id);
-	const iconMap = new Map(search.hits.map(p => [p.project_id, p.icon_url]));
-
-	const projects = await api(`projects?ids=${JSON.stringify(ids)}`);
-	projects.sort((a, b) => new Date(b.approved) - new Date(a.approved));
-
 	const results = [];
-	for (const p of projects) {
-		const approved = new Date(p.approved);
-		const queued = new Date(p.queued);
-		results.push({
-			id: p.id,
-			title: p.title,
-			icon_url: iconMap.get(p.id) || "https://placehold.co/64x64/d1d5db/374151?text=Mod",
-			approved,
-			queued,
-			delay: approved - queued,
-		});
+	let offset = 0;
+
+	while (results.length < SAMPLE_SIZE) {
+		const search = await api(`search?index=newest&limit=${REQUEST_SIZE}&offset=${offset}&facets=%5B%5B%22project_type%3Amod%22%5D%5D`);
+		if (search.hits.length === 0)
+			break;
+
+		const ids = search.hits.map(p => p.project_id);
+		const iconMap = new Map(search.hits.map(p => [p.project_id, p.icon_url]));
+		const projects = await api(`projects?ids=${JSON.stringify(ids)}`);
+
+		for (const project of projects) {
+			const approved = new Date(project.approved);
+			const queued = new Date(project.queued);
+			if (isNaN(approved) || isNaN(queued)) {
+				console.warn(`Skipping "${project.title}" due to invalid dates`);
+				continue;
+			}
+
+			const delay = approved - queued;
+			if (delay < 0 || delay > 365 * 24 * 60 * 60 * 1000) {
+				console.warn(`Skipping "${p.title}" due to unreasonable delay`);
+				continue;
+			}
+
+			results.push({
+				id: project.id,
+				title: project.title,
+				icon_url: iconMap.get(project.id) || "https://placehold.co/64x64/d1d5db/374151?text=Mod",
+				approved,
+				queued,
+				delay: approved - queued,
+			});
+
+			if (results.length >= SAMPLE_SIZE)
+				break;
+		}
+
+		offset += REQUEST_SIZE;
 	}
+
 	return results;
 }
 
