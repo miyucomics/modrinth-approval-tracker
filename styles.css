@@ -12,7 +12,6 @@ body {
 	color: var(--text-color);
 	margin: 0;
 	padding: 0;
-	transition: all 0.3s;
 }
 
 #theme-toggle {
@@ -102,6 +101,7 @@ body {
 	min-width: 0;
 	gap: 1rem;
 	transition: transform 0.1s;
+	box-shadow: 0px 3px 5px var(--background-color);
 }
 
 .card:hover {
@@ -111,7 +111,7 @@ body {
 .card-icon {
 	width: 4rem;
 	height: 4rem;
-	border-radius: 0.75rem;
+	border-radius: 0.3rem;
 	image-rendering: pixelated;
 	object-fit: cover;
 	flex-shrink: 0;
