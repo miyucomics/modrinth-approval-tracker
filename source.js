@@ -55,7 +55,7 @@ async function main() {
 
 async function downloadProjects() {
 	const search = await api(`search?index=newest&limit=${SAMPLE_SIZE}&facets=%5B%5B%22project_type%3Amod%22%5D%5D`);
-	
+
 	const ids = search.hits.map(p => p.project_id);
 	const iconMap = new Map(search.hits.map(p => [p.project_id, p.icon_url]));
 
@@ -63,18 +63,77 @@ async function downloadProjects() {
 	projects.sort((a, b) => new Date(b.approved) - new Date(a.approved));
 
 	const results = [];
+	let offset = 0;
+
 	for (const p of projects) {
 		const approved = new Date(p.approved);
 		const queued = new Date(p.queued);
+
+		// Skip mods with invalid dates
+		if (isNaN(approved.getTime()) || isNaN(queued.getTime())) {
+			console.warn(`Skipping mod "${p.title}" due to invalid dates`);
+			offset++; // ← Track skipped mods
+			continue;
+		}
+
+		const delay = approved - queued;
+
+		// Skip if delay is unreasonably large
+		if (delay < 0 || delay > 365 * 24 * 60 * 60 * 1000) {
+			console.warn(`Skipping mod "${p.title}" due to unreasonable delay: ${formatDuration(delay)}`);
+			offset++; // ← Track skipped mods
+			continue;
+		}
+
 		results.push({
 			id: p.id,
 			title: p.title,
 			icon_url: iconMap.get(p.id) || "https://placehold.co/64x64/d1d5db/374151?text=Mod",
 			approved,
 			queued,
-			delay: approved - queued,
+			delay,
 		});
 	}
+
+	if (offset > 0) {
+		console.log(`Fetching ${offset} replacement mods...`);
+		const replacementSearch = await api(`search?index=newest&limit=${offset}&offset=${SAMPLE_SIZE}&facets=%5B%5B%22project_type%3Amod%22%5D%5D`);
+		const replacementIds = replacementSearch.hits.map(p => p.project_id);
+		const replacementIconMap = new Map(replacementSearch.hits.map(p => [p.project_id, p.icon_url]));
+
+		if (replacementIds.length > 0) {
+			const replacementProjects = await api(`projects?ids=${JSON.stringify(replacementIds)}`);
+
+			for (const p of replacementProjects) {
+				if (results.length >= SAMPLE_SIZE) break;
+
+				const approved = new Date(p.approved);
+				const queued = new Date(p.queued);
+
+				if (isNaN(approved.getTime()) || isNaN(queued.getTime())) {
+					console.warn(`Skipping replacement mod "${p.title}" due to invalid dates`);
+					continue;
+				}
+
+				const delay = approved - queued;
+
+				if (delay < 0 || delay > 365 * 24 * 60 * 60 * 1000) {
+					console.warn(`Skipping replacement mod "${p.title}" due to unreasonable delay: ${formatDuration(delay)}`);
+					continue;
+				}
+
+				results.push({
+					id: p.id,
+					title: p.title,
+					icon_url: replacementIconMap.get(p.id) || "https://placehold.co/64x64/d1d5db/374151?text=Mod",
+					approved,
+					queued,
+					delay,
+				});
+			}
+		}
+	}
+
 	return results;
 }
 
